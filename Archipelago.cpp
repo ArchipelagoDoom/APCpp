@@ -949,6 +949,7 @@ bool parse_response(std::string msg, std::string &request) {
                 AP_NetworkPlayer recv_player = getPlayer(0, root[i]["receiving"].asInt());
                 AP_ItemSendMessage* msg = new AP_ItemSendMessage;
                 msg->type = AP_MessageType::ItemSend;
+                msg->printType = printType;
                 msg->item = getItemName(recv_player.game, root[i]["item"]["item"].asInt64());
                 msg->recvPlayer = recv_player.alias;
                 msg->text = msg->item + std::string(" was sent to ") + msg->recvPlayer;
@@ -958,6 +959,7 @@ bool parse_response(std::string msg, std::string &request) {
                 AP_NetworkPlayer recv_player = getPlayer(0, root[i]["receiving"].asInt());
                 AP_HintMessage* msg = new AP_HintMessage;
                 msg->type = AP_MessageType::Hint;
+                msg->printType = printType;
                 msg->item = getItemName(recv_player.game,root[i]["item"]["item"].asInt64());
                 msg->sendPlayer = send_player.alias;
                 msg->recvPlayer = recv_player.alias;
@@ -968,6 +970,7 @@ bool parse_response(std::string msg, std::string &request) {
             } else if (printType == "Countdown") {
                 AP_CountdownMessage* msg = new AP_CountdownMessage;
                 msg->type = AP_MessageType::Countdown;
+                msg->printType = printType;
                 if (root[i]["countdown"].isInt()) {
                     msg->timer = root[i]["countdown"].asInt();
                 } else {
@@ -977,6 +980,7 @@ bool parse_response(std::string msg, std::string &request) {
                 messageQueue.push_back(msg);
             } else {
                 AP_Message* msg = new AP_Message;
+                msg->printType = printType;
                 msg->text = "";
                 for (auto itr : root[i]["data"]) {
                     if (itr.get("type","").asString() == "player_id") {

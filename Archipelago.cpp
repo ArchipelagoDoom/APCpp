@@ -54,6 +54,7 @@ bool deathlinksupported = false;
 bool enable_deathlink = false;
 int deathlink_amnesty = 0;
 int cur_deathlink_amnesty = 0;
+double deathlink_timestamp = 0;
 
 // Message System
 std::deque<AP_Message*> messageQueue;
@@ -419,10 +420,11 @@ void AP_DeathLinkSend(const std::string &cause) {
         return;
     }
     cur_deathlink_amnesty = deathlink_amnesty;
-    std::chrono::time_point<std::chrono::system_clock> timestamp = std::chrono::system_clock::now();
     AP_Bounce b;
     Json::Value v;
-    v["time"] = (int64_t)std::chrono::duration_cast<std::chrono::seconds>(timestamp.time_since_epoch()).count();
+    auto timestamp = std::chrono::duration<double>(std::chrono::system_clock::now().time_since_epoch());
+    deathlink_timestamp = timestamp.count();
+    v["time"] = deathlink_timestamp;
     v["source"] = ap_player_name; // Name and Shame >:D
     if (!cause.empty())
     {
@@ -1073,12 +1075,13 @@ bool parse_response(std::string msg, std::string &request) {
                 // Only do native DeathLink handling, client is not interested in bounce packets
                 for (unsigned int j = 0; j < root[i]["tags"].size(); j++) {
                     if (root[i]["tags"][j].asString() == "DeathLink") {
-                        std::string source = root[i]["data"]["source"].asString();
-                        
                         // Suspicions confirmed ;-; But maybe we died, not them?
-                        if (source == ap_player_name) break; // We already paid our penance
+                        double timestamp = root[i]["data"]["time"].asDouble();
+                        if (timestamp == deathlink_timestamp) break; // This was us -- we already paid our penance
+
                         deathlinkstat = true;
                         if (recvdeath) {
+                            std::string source = root[i]["data"]["source"].asString();
                             std::string cause = root[i]["data"]["cause"].isNull() ? "" : root[i]["data"]["cause"].asString();
                             recvdeath(source, cause);
                         }
